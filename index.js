@@ -27,7 +27,7 @@ async function connectDB() {
 }
 connectDB();
 
-// Default Route
+// Default Routes
 app.get("/", (req, res) => {
   res.send("Task Management API is running...");
 });
