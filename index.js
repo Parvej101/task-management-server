@@ -1,8 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient } from "mongodb";
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -12,33 +13,33 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-const client = new MongoClient(process.env.MONGO_URI);
-let db;
+const { MONGO_USER, MONGO_PASSWORD } = process.env;
+
+// Construct Mongo URI
+const mongoURI = `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@cluster0.mongodb.net/taskManagementDB?retryWrites=true&w=majority`;
+
+const client = new MongoClient(mongoURI);
 
 async function connectDB() {
   try {
     await client.connect();
-    db = client.db("task-manager"); // Database name
-    console.log("MongoDB connected");
+    console.log("MongoDB connected successfully");
+    return client.db("taskManagementDB");
   } catch (error) {
     console.error("MongoDB connection error:", error);
+    process.exit(1);
   }
 }
-connectDB();
 
-// Default Routes
-app.get("/", (req, res) => {
-  res.send("Task Management API is running...");
+// API Route Example
+app.get("/tasks", async (req, res) => {
+  const db = await connectDB();
+  const tasksCollection = db.collection("tasks");
+  const tasks = await tasksCollection.find({}).toArray();
+  res.json(tasks);
 });
-
-// Import Routes
-import taskRoutes from "./routes/taskRoutes.js";
-app.use("/tasks", taskRoutes);
 
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-export { db };
